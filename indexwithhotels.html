@@ -94,9 +94,9 @@
 <header>
   <h1>Iceland — Activities & Hotels</h1>
   <div class="toggle-group">
-    <button class="toggle-btn btn-activities active" id="btn-activities" onclick="setLayer('activities')">Activities only</button>
+    <button class="toggle-btn btn-activities" id="btn-activities" onclick="setLayer('activities')">Activities only</button>
     <button class="toggle-btn btn-hotels" id="btn-hotels" onclick="setLayer('hotels')">Hotels only</button>
-    <button class="toggle-btn btn-both" id="btn-both" onclick="setLayer('both')">Show both</button>
+    <button class="toggle-btn btn-both active" id="btn-both" onclick="setLayer('both')">Show both</button>
   </div>
 </header>
 
@@ -113,8 +113,8 @@
     <span class="legend-item"><span class="legend-dot" style="background:#975a16;"></span>Culture</span>
     <span style="font-size:11px;color:#888;margin-left:2px;">· circle size = frequency</span>
   </span>
-  <span class="legend-divider" id="legend-divider" style="display:none;"></span>
-  <span id="legend-hotels" class="legend-section" style="display:none;">
+  <span class="legend-divider" id="legend-divider"></span>
+  <span id="legend-hotels" class="legend-section">
     <span class="legend-label">Hotels:</span>
     <span class="legend-item"><span class="legend-square"></span>4.1+ rated (Google Maps)</span>
     <span style="font-size:11px;color:#888;margin-left:2px;">· pin size = rating</span>
@@ -196,7 +196,7 @@ const HOTEL_COLOR = "#7c3aed";
 
 let map, service, infoWindow;
 let activityMarkers = [], hotelMarkers = [];
-let currentLayer = "activities";
+let currentLayer = "both";
 
 function setLayer(layer) {
   currentLayer = layer;
@@ -310,7 +310,7 @@ function initMap() {
     </svg>`;
     const marker = new google.maps.Marker({
       position: { lat: h.lat, lng: h.lng }, map,
-      visible: false,
+      visible: true,
       icon: { url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg), scaledSize: new google.maps.Size(sz, sz+8), anchor: new google.maps.Point(sz/2, sz+8) },
       title: h.name, zIndex: Math.round(h.rating * 10),
     });
