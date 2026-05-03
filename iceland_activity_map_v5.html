@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iceland Must-Do Activities Map</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f3; }
+    header { padding: 16px 24px 12px; background: #fff; border-bottom: 1px solid #e5e5e3; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    header h1 { font-size: 18px; font-weight: 600; color: #1a1a1a; }
+    header p { font-size: 13px; color: #6b6b6b; }
+    #map { width: 100%; height: calc(100vh - 108px); }
+    .legend { background: #fff; padding: 10px 24px; border-top: 1px solid #e5e5e3; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 12px; color: #555; }
+    .legend-label { font-weight: 600; color: #1a1a1a; margin-right: 2px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+    .legend-divider { border-left: 1px solid #ddd; height: 16px; margin: 0 4px; }
+
+    /* Info window styles */
+    .iw-wrap { width: 260px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .iw-img { width: 100%; height: 140px; object-fit: cover; display: block; border-radius: 6px 6px 0 0; background: #e8e8e6; }
+    .iw-img-placeholder { width: 100%; height: 140px; background: #e8e8e6; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 12px; border-radius: 6px 6px 0 0; }
+    .iw-body { padding: 11px 13px 13px; }
+    .iw-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; line-height: 1.3; color: #1a1a1a; }
+    .iw-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 10px; color: #fff; margin-bottom: 7px; font-weight: 500; }
+    .iw-desc { font-size: 12px; color: #444; line-height: 1.5; margin-bottom: 8px; }
+    .iw-footer { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #eee; padding-top: 7px; gap: 6px; }
+    .iw-count { font-size: 11px; color: #888; }
+    .iw-count strong { color: #1a1a1a; }
+    .iw-link { font-size: 11px; color: #2563eb; text-decoration: none; font-weight: 500; white-space: nowrap; }
+    .iw-link:hover { text-decoration: underline; }
+
+    /* Remove default Google info window chrome */
+    .gm-style .gm-style-iw-c { padding: 0 !important; border-radius: 10px !important; overflow: hidden !important; box-shadow: 0 4px 16px rgba(0,0,0,0.18) !important; }
+    .gm-style .gm-style-iw-d { overflow: hidden !important; }
+    .gm-style .gm-style-iw-t::after { display: none; }
+    .gm-style-iw-tc { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Iceland must-do activities</h1>
+  <p>Ranked by frequency across tours surveyed · Click any pin for details</p>
+</header>
+
+<div id="map"></div>
+
+<div class="legend">
+  <span class="legend-label">Category:</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#4a8f1f;"></span>Nature</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#2b6cb0;"></span>Glacier</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#c05621;"></span>Geology</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#276749;"></span>Wellness</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#553c9a;"></span>Wildlife</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#975a16;"></span>Culture</span>
+  <span class="legend-divider"></span>
+  <span>Pin size = how many tours include it (out of 14)</span>
+</div>
+
+<script>
+const LOCATIONS = [
+  { name: "Geysir (Golden Circle)", lat: 64.314, lng: -20.300, count: 13, cat: "geology", placeId: "ChIJH9zZM-yj1kgR5Xfp_dooi9o", desc: "The erupting hot spring that gave geysers their name. Part of the unmissable Golden Circle trio.", website: null },
+  { name: "Gullfoss waterfall", lat: 64.327, lng: -20.120, count: 13, cat: "nature", placeId: "ChIJybZFr3Sl1kgRARZBC9tHYyw", desc: "Massive two-tiered waterfall cascading into a canyon. One of Iceland's most iconic sights.", website: "https://www.gullfoss.is" },
+  { name: "Þingvellir National Park", lat: 64.282, lng: -21.076, count: 13, cat: "geology", placeId: "ChIJe2kT-x-B1kgR8mKSB4tsdWs", desc: "UNESCO World Heritage site. Walk between the North American and Eurasian tectonic plates.", website: "https://www.thingvellir.is" },
+  { name: "Seljalandsfoss", lat: 63.616, lng: -19.989, count: 11, cat: "nature", placeId: "ChIJFSTv6K0e10gRjRcJUiDmAa4", desc: "Famous 60m waterfall you can walk behind. On the south coast ring road.", website: null },
+  { name: "Sólheimajökull glacier hike", lat: 63.571, lng: -19.292, count: 10, cat: "glacier", placeId: "ChIJSXrZaFcw10gRNvldSdyBK1s", desc: "Guided crampon hike on a receding glacier with dramatic ice formations and crevasses.", website: null },
+  { name: "Langjökull glacier tunnel", lat: 64.628, lng: -20.490, count: 10, cat: "glacier", placeId: "ChIJLTStep0Q1EgRBsB4jPWBIx8", desc: "Iceland's second-largest glacier. Ride a monster truck up then walk illuminated ice tunnels inside.", website: "https://intotheglacier.is" },
+  { name: "Geothermal hot springs", lat: 64.137, lng: -20.310, count: 10, cat: "wellness", placeId: "ChIJAzrP-_OV1kgRqbTTIAgihLo", desc: "Soaking in natural geothermal pools is a cornerstone of Icelandic culture, featured on almost every tour.", website: "http://www.secretlagoon.is" },
+  { name: "Snæfellsnes Peninsula", lat: 64.844, lng: -22.653, count: 7, cat: "nature", placeId: "ChIJp2-bF4J31UgR_xOcxn-mbo0", desc: "Jules Verne's 'Journey to the Center of the Earth' setting. Glacial volcano, fishing villages, seals.", website: null },
+  { name: "Jökulsárlón glacier lagoon", lat: 64.078, lng: -16.231, count: 7, cat: "nature", placeId: "ChIJGTg61-zWz0gRqUYB4VnJBc0", desc: "Stunning lagoon full of floating icebergs calved from Vatnajökull. Seals often spotted here.", website: null },
+  { name: "Reynisfjara black sand beach", lat: 63.414, lng: -19.010, count: 7, cat: "nature", placeId: "ChIJkfGf2zBK10gRmC1j9msDIDk", desc: "Dramatic black sand, towering basalt columns, and powerful Atlantic waves near Vík.", website: null },
+  { name: "Sky Lagoon", lat: 64.116, lng: -21.946, count: 6, cat: "wellness", placeId: "ChIJpyUozoYL1kgREGm6RWPXuio", desc: "Infinity-edge geothermal pool overlooking the ocean just outside Reykjavík. 7-step ritual spa.", website: "https://www.skylagoon.com" },
+  { name: "Skógafoss waterfall", lat: 63.532, lng: -19.511, count: 6, cat: "nature", placeId: "ChIJFYylOXY710gRSHn-zR_HYA8", desc: "Powerful 60m waterfall with 400+ steps to a clifftop viewpoint and rainbow mist.", website: null },
+  { name: "Víðgelmir lava cave", lat: 64.753, lng: -20.802, count: 6, cat: "geology", placeId: "ChIJB0qmxBgV1EgRuhbaHt_G0AA", desc: "Largest lava tube in Iceland. Guided tour through colorful rock formations where Vikings once hid.", website: "http://thecave.is" },
+  { name: "Whale watching, Húsavík", lat: 66.046, lng: -17.343, count: 5, cat: "wildlife", placeId: "ChIJy7s_4xRCzUgRegOX3-zviK0", desc: "Whale watching capital of Europe. Humpbacks, minkes, and blue whales in Skjálfandi Bay.", website: "https://www.northsailing.is" },
+  { name: "Icelandic horse farm", lat: 64.017, lng: -21.202, count: 5, cat: "culture", placeId: "ChIJDx9DGelg1kgRJb7V2S5PIqs", desc: "Meet the unique five-gaited Icelandic horse — a breed unchanged for over 1,000 years.", website: "http://www.solhestar.is" },
+  { name: "LAVA Centre", lat: 63.753, lng: -20.236, count: 5, cat: "geology", placeId: "ChIJI4A7-nXj1kgRU6yxFPeccjo", desc: "Interactive volcano and earthquake museum in Hvolsvöllur. Real-time seismic data displays.", website: "http://lavacentre.is" },
+  { name: "Mývatn lake & geothermal area", lat: 65.604, lng: -16.996, count: 4, cat: "geology", placeId: "ChIJ3Qc8lUSczUgRiCpzvw3L5M0", desc: "Volcanic lake with Dimmuborgir lava formations, Námaskarð mud pots, and pseudocraters.", website: null },
+  { name: "Dettifoss waterfall", lat: 65.815, lng: -16.385, count: 4, cat: "nature", placeId: "ChIJuU9fzooGzUgReiMomHV4QkA", desc: "Most powerful waterfall in Europe by volume. Raw and thunderous in the north.", website: null },
+  { name: "Diamond Beach", lat: 64.044, lng: -16.178, count: 4, cat: "nature", placeId: "ChIJ8wb7pBnXz0gRWoQH-WXoAkI", desc: "Glacial ice chunks washed ashore on black sand, glittering like diamonds. Next to Jökulsárlón.", website: null },
+  { name: "Skaftafell / Vatnajökull NP", lat: 64.017, lng: -16.967, count: 4, cat: "nature", placeId: "ChIJI4soVJc10EgRxeMp5BbzKHo", desc: "Glacier hikes, Svartifoss waterfall, and vast ice cap — Europe's largest national park.", website: "https://www.vatnajokulsthjodgardur.is/en/areas/skaftafell" },
+  { name: "Geothermal bakery, Laugarvatn", lat: 64.215, lng: -20.730, count: 4, cat: "culture", placeId: "ChIJGe-j-76a1kgRic_vTfaETs4", desc: "Rye bread baked underground in geothermal black sand at Laugarvatn Fontana.", website: "http://www.fontana.is" },
+  { name: "Goðafoss waterfall", lat: 65.683, lng: -17.550, count: 3, cat: "nature", placeId: "ChIJnzYfSGp-zUgROx0NTqrNu34", desc: "'Waterfall of the Gods' — where Iceland's Norse idols were thrown in 1000 AD.", website: null },
+  { name: "Secret Lagoon, Flúðir", lat: 64.137, lng: -20.310, count: 3, cat: "wellness", placeId: "ChIJAzrP-_OV1kgRqbTTIAgihLo", desc: "Iceland's oldest natural swimming pool, quieter and more rustic than Sky Lagoon.", website: "http://www.secretlagoon.is" },
+  { name: "Perlan Museum, Reykjavík", lat: 64.129, lng: -21.919, count: 2, cat: "culture", placeId: "ChIJnXOkuUwL1kgRKT9vWdb_DnI", desc: "Glass-domed landmark with 360° views, indoor ice cave, and geology exhibits.", website: "https://perlan.is" },
+  { name: "Akureyri botanical garden", lat: 65.675, lng: -18.094, count: 2, cat: "culture", placeId: "ChIJY657CRCP0kgR_B8QL359IkQ", desc: "One of the world's northernmost botanical gardens, just miles from the Arctic Circle.", website: "http://www.lystigardur.akureyri.is" },
+  { name: "Krauma spa, Reykholt", lat: 64.664, lng: -21.411, count: 2, cat: "wellness", placeId: "ChIJpbdhrQw21EgRg6RKFgbPPJQ", desc: "Geothermal baths fed by Deildartunguhver — Europe's most powerful hot spring.", website: "http://krauma.is" },
+  { name: "Silfra fissure snorkelling", lat: 64.256, lng: -21.116, count: 1, cat: "geology", placeId: "ChIJY5oNa-101kgRFdo1xXhgCPY", desc: "Float between the American and Eurasian tectonic plates in crystal-clear 2°C water.", website: "https://adventures.is/iceland/day-tours/snorkeling-and-diving/" },
+  { name: "Westman Islands", lat: 63.428, lng: -20.267, count: 1, cat: "nature", placeId: "ChIJlVaqgd4I10gRWRPJ4v-yYxU", desc: "Volcanic archipelago with puffin colonies, Eldfell volcano, and dramatic coastal scenery.", website: null },
+  { name: "Eastern fjords trekking", lat: 65.525, lng: -13.812, count: 1, cat: "nature", placeId: "ChIJi5e1crbty0gRN5WICAFvRQw", desc: "Remote fjords, puffin nesting sites, and stunning multi-day hiking trails.", website: null },
+];
+
+const CAT_COLORS = {
+  nature:   "#4a8f1f",
+  glacier:  "#2b6cb0",
+  geology:  "#c05621",
+  wellness: "#276749",
+  wildlife: "#553c9a",
+  culture:  "#975a16",
+};
+
+const CAT_LABELS = {
+  nature: "Nature", glacier: "Glacier", geology: "Geology",
+  wellness: "Wellness", wildlife: "Wildlife", culture: "Culture"
+};
+
+let map, service, infoWindow;
+
+function initMap() {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat: 64.8, lng: -19.0 },
+    zoom: 6,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: true,
+    styles: [
+      { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }
+    ]
+  });
+
+  service = new google.maps.places.PlacesService(map);
+  infoWindow = new google.maps.InfoWindow({ maxWidth: 280 });
+
+  LOCATIONS.forEach(loc => {
+    const r = 10 + Math.round((loc.count / 13) * 18);
+    const color = CAT_COLORS[loc.cat];
+    const size = r * 2;
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
+      <circle cx="${r}" cy="${r}" r="${r - 1.5}" fill="${color}" stroke="white" stroke-width="2.5"/>
+      <text x="${r}" y="${r}" text-anchor="middle" dominant-baseline="central"
+        fill="white" font-size="${r > 16 ? 13 : 11}" font-weight="700"
+        font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">${loc.count}</text>
+    </svg>`;
+
+    const marker = new google.maps.Marker({
+      position: { lat: loc.lat, lng: loc.lng },
+      map,
+      icon: {
+        url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+        scaledSize: new google.maps.Size(size, size),
+        anchor: new google.maps.Point(r, r),
+      },
+      title: loc.name,
+      zIndex: loc.count,
+    });
+
+    marker.addListener("click", () => {
+      infoWindow.close();
+
+      const linkHtml = loc.website
+        ? `<a class="iw-link" href="${loc.website}" target="_blank" rel="noopener">Visit website &rarr;</a>`
+        : "";
+
+      const loadingHtml = `
+        <div class="iw-wrap">
+          <div class="iw-img-placeholder">Loading photo...</div>
+          <div class="iw-body">
+            <div class="iw-name">${loc.name}</div>
+            <div class="iw-badge" style="background:${color}">${CAT_LABELS[loc.cat]}</div>
+            <div class="iw-desc">${loc.desc}</div>
+            <div class="iw-footer">
+              <div class="iw-count">In <strong>${loc.count}</strong> of 14 tours surveyed</div>
+              ${linkHtml}
+            </div>
+          </div>
+        </div>`;
+
+      infoWindow.setContent(loadingHtml);
+      infoWindow.open(map, marker);
+
+      // Fetch place photo via Places API
+      service.getDetails(
+        { placeId: loc.placeId, fields: ["photos", "url"] },
+        (place, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && place.photos && place.photos.length > 0) {
+            const photoUrl = place.photos[0].getUrl({ maxWidth: 560, maxHeight: 280 });
+            const withPhoto = `
+              <div class="iw-wrap">
+                <img class="iw-img" src="${photoUrl}" alt="${loc.name}" />
+                <div class="iw-body">
+                  <div class="iw-name">${loc.name}</div>
+                  <div class="iw-badge" style="background:${color}">${CAT_LABELS[loc.cat]}</div>
+                  <div class="iw-desc">${loc.desc}</div>
+                  <div class="iw-footer">
+                    <div class="iw-count">In <strong>${loc.count}</strong> of 14 tours surveyed</div>
+                    ${linkHtml}
+                  </div>
+                </div>
+              </div>`;
+            infoWindow.setContent(withPhoto);
+          }
+        }
+      );
+    });
+  });
+}
+</script>
+
+<!--
+  IMPORTANT: Replace YOUR_API_KEY below with your Google Maps JavaScript API key.
+  Enable these APIs in Google Cloud Console:
+    - Maps JavaScript API
+    - Places API
+  Get a key at: https://console.cloud.google.com/apis/credentials
+-->
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1wA7lWm5rY3xDBFBji7UjYPRb67Er2Wo&libraries=places&callback=initMap">
+</script>
+
+</body>
+</html>
