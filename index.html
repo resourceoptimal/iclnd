@@ -54,7 +54,7 @@
 
 <header>
   <h1>Iceland must-do activities</h1>
-  <p>Ranked by frequency across tours surveyed · Click any pin for details</p>
+  <p>35 activities ranked by frequency across tours surveyed · Click any pin for details</p>
 </header>
 
 <div id="map"></div>
@@ -77,8 +77,8 @@ const LOCATIONS = [
   { name: "Gullfoss waterfall", lat: 64.327, lng: -20.120, count: 13, cat: "nature", placeId: "ChIJybZFr3Sl1kgRARZBC9tHYyw", desc: "Massive two-tiered waterfall cascading into a canyon. One of Iceland's most iconic sights.", website: "https://www.gullfoss.is" },
   { name: "Þingvellir National Park", lat: 64.282, lng: -21.076, count: 13, cat: "geology", placeId: "ChIJe2kT-x-B1kgR8mKSB4tsdWs", desc: "UNESCO World Heritage site. Walk between the North American and Eurasian tectonic plates.", website: "https://www.thingvellir.is" },
   { name: "Seljalandsfoss", lat: 63.616, lng: -19.989, count: 11, cat: "nature", placeId: "ChIJFSTv6K0e10gRjRcJUiDmAa4", desc: "Famous 60m waterfall you can walk behind. On the south coast ring road.", website: null },
-  { name: "Sólheimajökull glacier hike", lat: 63.571, lng: -19.292, count: 10, cat: "glacier", placeId: "ChIJSXrZaFcw10gRNvldSdyBK1s", desc: "Guided crampon hike on a receding glacier with dramatic ice formations and crevasses.", website: null },
-  { name: "Langjökull glacier tunnel", lat: 64.628, lng: -20.490, count: 10, cat: "glacier", placeId: "ChIJLTStep0Q1EgRBsB4jPWBIx8", desc: "Iceland's second-largest glacier. Ride a monster truck up then walk illuminated ice tunnels inside.", website: "https://intotheglacier.is" },
+  { name: "Sólheimajökull glacier hike", lat: 63.571, lng: -19.292, count: 8, cat: "glacier", placeId: "ChIJSXrZaFcw10gRNvldSdyBK1s", desc: "Guided crampon hike on a receding glacier with dramatic ice formations and crevasses. Appears on most south coast tours.", website: null },
+  { name: "Langjökull glacier tunnel", lat: 64.628, lng: -20.490, count: 4, cat: "glacier", placeId: "ChIJLTStep0Q1EgRBsB4jPWBIx8", desc: "Iceland's second-largest glacier. Ride a monster truck up then walk illuminated ice tunnels inside.", website: "https://intotheglacier.is" },
   { name: "Geothermal hot springs", lat: 64.137, lng: -20.310, count: 10, cat: "wellness", placeId: "ChIJAzrP-_OV1kgRqbTTIAgihLo", desc: "Soaking in natural geothermal pools is a cornerstone of Icelandic culture, featured on almost every tour.", website: "http://www.secretlagoon.is" },
   { name: "Snæfellsnes Peninsula", lat: 64.844, lng: -22.653, count: 7, cat: "nature", placeId: "ChIJp2-bF4J31UgR_xOcxn-mbo0", desc: "Jules Verne's 'Journey to the Center of the Earth' setting. Glacial volcano, fishing villages, seals.", website: null },
   { name: "Jökulsárlón glacier lagoon", lat: 64.078, lng: -16.231, count: 7, cat: "nature", placeId: "ChIJGTg61-zWz0gRqUYB4VnJBc0", desc: "Stunning lagoon full of floating icebergs calved from Vatnajökull. Seals often spotted here.", website: null },
@@ -102,6 +102,13 @@ const LOCATIONS = [
   { name: "Silfra fissure snorkelling", lat: 64.256, lng: -21.116, count: 1, cat: "geology", placeId: "ChIJY5oNa-101kgRFdo1xXhgCPY", desc: "Float between the American and Eurasian tectonic plates in crystal-clear 2°C water.", website: "https://adventures.is/iceland/day-tours/snorkeling-and-diving/" },
   { name: "Westman Islands", lat: 63.428, lng: -20.267, count: 1, cat: "nature", placeId: "ChIJlVaqgd4I10gRWRPJ4v-yYxU", desc: "Volcanic archipelago with puffin colonies, Eldfell volcano, and dramatic coastal scenery.", website: null },
   { name: "Eastern fjords trekking", lat: 65.525, lng: -13.812, count: 1, cat: "nature", placeId: "ChIJi5e1crbty0gRN5WICAFvRQw", desc: "Remote fjords, puffin nesting sites, and stunning multi-day hiking trails.", website: null },
+  { name: "Gljúfrabúi waterfall", lat: 63.6208631, lng: -19.9864486, count: 5, cat: "nature", placeId: "ChIJF7NTFbAe10gRLl8U7LZVapY", desc: "Hidden canyon waterfall right next to Seljalandsfoss — you wade through a stream to reach it inside a narrow rock gorge.", website: null },
+  { name: "Raufarhólshellir lava cave", lat: 63.93992409999999, lng: -21.3955734, count: 2, cat: "geology", placeId: "ChIJuZsNdWpo1kgReBsAgoXUz5M", desc: "The 'Blue Mountains' lava tube near Þingvellir — one of Iceland's longest lava tunnels with guided tours through colourful formations.", website: null },
+  { name: "Gjáin Valley hike", lat: 64.14999089999999, lng: -19.7365972, count: 2, cat: "nature", placeId: "ChIJSQECUxq21kgRWf09JcqCnpM", desc: "A lush hidden oasis of waterfalls and lava formations — often called Iceland's most magical secret valley.", website: null },
+  { name: "Dimmuborgir lava fields", lat: 65.5912203, lng: -16.91228, count: 4, cat: "geology", placeId: "ChIJ2U0EEiOfzUgRFiNiNp9NH4A", desc: "Dramatic 'dark fortress' lava formations at Mývatn — a maze of black lava pillars, arches, and caves steeped in Norse folklore.", website: null },
+  { name: "Námaskarð geothermal area", lat: 65.64137889999999, lng: -16.8081595, count: 4, cat: "geology", placeId: "ChIJVYulJHWfzUgRtltw9aivPdY", desc: "Bubbling mud pools and roaring steam vents at Mývatn — one of Iceland's most dramatic geothermal landscapes.", website: null },
+  { name: "Fjaðrárgljúfur Canyon", lat: 63.771279, lng: -18.1718159, count: 1, cat: "nature", placeId: "ChIJ3ZFCWfDl0EgRvbVlccHsIKQ", desc: "A 2km-long, 100m-deep moss-covered canyon near Kirkjubæjarklaustur — Justin Bieber's 'I'll Show You' was filmed here.", website: null },
+  { name: "Múlagljúfur Canyon hike", lat: 63.98905809999999, lng: -16.4638888, count: 1, cat: "nature", placeId: "ChIJh35iEokp0EgR3oaeY0GMoo4", desc: "A hidden gem canyon in southeast Iceland with cascading waterfalls into a glacial valley — rated by many as the best hike in Iceland.", website: null },
 ];
 
 const CAT_COLORS = {
