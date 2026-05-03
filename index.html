@@ -33,7 +33,25 @@
     .toggle-btn.btn-activities.active { background: #2b6cb0; color: #fff; border-color: #2b6cb0; }
     .toggle-btn.btn-hotels { color: #7c3aed; }
     .toggle-btn.btn-hotels.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
-    .toggle-btn.btn-both.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+    .tier-filter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .tier-filter-label { font-size: 11px; color: #888; font-weight: 500; white-space: nowrap; }
+    .tier-pill {
+      font-size: 11px; font-weight: 500;
+      padding: 4px 11px; border-radius: 20px;
+      border: 1.5px solid #ccc;
+      background: #fff; cursor: pointer; transition: all 0.15s;
+    }
+    .tier-pill.active { color: #fff; border-color: transparent; }
+    .tier-pill[data-tier="iconic"]   { color: #185FA5; }
+    .tier-pill[data-tier="iconic"].active   { background: #378ADD; }
+    .tier-pill[data-tier="hidden"]   { color: #3B6D11; }
+    .tier-pill[data-tier="hidden"].active   { background: #3B6D11; }
+    .tier-pill[data-tier="fitness"]  { color: #534AB7; }
+    .tier-pill[data-tier="fitness"].active  { background: #7F77DD; }
+    .tier-pill[data-tier="interest"] { color: #854F0B; }
+    .tier-pill[data-tier="interest"].active { background: #BA7517; }
+    .tier-pill[data-tier="solid"]    { color: #5F5E5A; }
+    .tier-pill[data-tier="solid"].active    { background: #888780; }
 
     #map { width: 100%; height: calc(100vh - 104px); }
 
@@ -97,6 +115,14 @@
     <button class="toggle-btn btn-activities" id="btn-activities" onclick="setLayer('activities')">Activities only</button>
     <button class="toggle-btn btn-hotels" id="btn-hotels" onclick="setLayer('hotels')">Hotels only</button>
     <button class="toggle-btn btn-both active" id="btn-both" onclick="setLayer('both')">Show both</button>
+  </div>
+  <div class="tier-filter" id="tier-filter">
+    <span class="tier-filter-label">Tiers:</span>
+    <button class="tier-pill active" data-tier="iconic"   onclick="toggleTier('iconic')">Iconic</button>
+    <button class="tier-pill active" data-tier="hidden"   onclick="toggleTier('hidden')">Hidden gems</button>
+    <button class="tier-pill active" data-tier="fitness"  onclick="toggleTier('fitness')">Fitness / conditions</button>
+    <button class="tier-pill active" data-tier="interest" onclick="toggleTier('interest')">Interest specific</button>
+    <button class="tier-pill active" data-tier="solid"    onclick="toggleTier('solid')">Solid stops</button>
   </div>
 </header>
 
@@ -206,22 +232,39 @@ const HOTEL_COLOR = "#7c3aed";
 let map, service, infoWindow;
 let activityMarkers = [], hotelMarkers = [];
 let currentLayer = "both";
+let activeTiers = new Set(["iconic","hidden","fitness","interest","solid"]);
+
+function applyVisibility() {
+  const showA = currentLayer === "activities" || currentLayer === "both";
+  const showH = currentLayer === "hotels"     || currentLayer === "both";
+  activityMarkers.forEach((m, i) => {
+    m.setVisible(showA && activeTiers.has(ACTIVITIES[i].tier));
+  });
+  hotelMarkers.forEach(m => m.setVisible(showH));
+  document.getElementById("legend-activities").style.display = showA ? "" : "none";
+  document.getElementById("legend-hotels").style.display = showH ? "" : "none";
+  document.getElementById("legend-divider").style.display = (showA && showH) ? "" : "none";
+  document.getElementById("tier-filter").style.display = showA ? "" : "none";
+}
 
 function setLayer(layer) {
   currentLayer = layer;
   ["activities","hotels","both"].forEach(id => {
     document.getElementById("btn-" + id).classList.toggle("active", id === layer);
   });
-  const showA = layer === "activities" || layer === "both";
-  const showH = layer === "hotels" || layer === "both";
-  activityMarkers.forEach(m => m.setVisible(showA));
-  hotelMarkers.forEach(m => m.setVisible(showH));
   infoWindow.close();
+  applyVisibility();
+}
 
-  // Update legend
-  document.getElementById("legend-activities").style.display = showA ? "" : "none";
-  document.getElementById("legend-hotels").style.display = showH ? "" : "none";
-  document.getElementById("legend-divider").style.display = (showA && showH) ? "" : "none";
+function toggleTier(tier) {
+  if (activeTiers.has(tier)) {
+    activeTiers.delete(tier);
+  } else {
+    activeTiers.add(tier);
+  }
+  document.querySelector(`.tier-pill[data-tier="${tier}"]`).classList.toggle("active", activeTiers.has(tier));
+  infoWindow.close();
+  applyVisibility();
 }
 
 function starsHtml(r) {
