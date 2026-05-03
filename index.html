@@ -19,8 +19,7 @@
 
     /* Info window styles */
     .iw-wrap { width: 260px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .iw-img { width: 100%; height: 140px; object-fit: cover; display: block; border-radius: 6px 6px 0 0; background: #e8e8e6; }
-    .iw-img-placeholder { width: 100%; height: 140px; background: #e8e8e6; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 12px; border-radius: 6px 6px 0 0; }
+
     .iw-body { padding: 11px 13px 13px; }
     .iw-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; line-height: 1.3; color: #1a1a1a; }
     .iw-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 10px; color: #fff; margin-bottom: 7px; font-weight: 500; }
@@ -30,6 +29,19 @@
     .iw-count strong { color: #1a1a1a; }
     .iw-link { font-size: 11px; color: #2563eb; text-decoration: none; font-weight: 500; white-space: nowrap; }
     .iw-link:hover { text-decoration: underline; }
+
+    /* Carousel */
+    .iw-carousel { position: relative; width: 100%; height: 160px; background: #e8e8e6; border-radius: 6px 6px 0 0; overflow: hidden; }
+    .iw-carousel img { width: 100%; height: 160px; object-fit: cover; display: block; position: absolute; top: 0; left: 0; opacity: 0; transition: opacity 0.25s; pointer-events: none; }
+    .iw-carousel img.active { opacity: 1; pointer-events: auto; }
+    .iw-carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.45); color: #fff; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; line-height: 1; padding: 0; }
+    .iw-carousel-btn:hover { background: rgba(0,0,0,0.7); }
+    .iw-carousel-prev { left: 8px; }
+    .iw-carousel-next { right: 8px; }
+    .iw-carousel-dots { position: absolute; bottom: 6px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; z-index: 10; }
+    .iw-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.5); cursor: pointer; border: none; padding: 0; }
+    .iw-dot.active { background: #fff; }
+    .iw-carousel-loading { width: 100%; height: 160px; background: #e8e8e6; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 12px; border-radius: 6px 6px 0 0; }
 
     /* Remove default Google info window chrome */
     .gm-style .gm-style-iw-c { padding: 0 !important; border-radius: 10px !important; overflow: hidden !important; box-shadow: 0 4px 16px rgba(0,0,0,0.18) !important; }
@@ -154,9 +166,10 @@ function initMap() {
         ? `<a class="iw-link" href="${loc.website}" target="_blank" rel="noopener">Visit website &rarr;</a>`
         : "";
 
-      const loadingHtml = `
+      // Show loading state
+      infoWindow.setContent(`
         <div class="iw-wrap">
-          <div class="iw-img-placeholder">Loading photo...</div>
+          <div class="iw-carousel-loading">Loading photos...</div>
           <div class="iw-body">
             <div class="iw-name">${loc.name}</div>
             <div class="iw-badge" style="background:${color}">${CAT_LABELS[loc.cat]}</div>
@@ -166,20 +179,21 @@ function initMap() {
               ${linkHtml}
             </div>
           </div>
-        </div>`;
-
-      infoWindow.setContent(loadingHtml);
+        </div>`);
       infoWindow.open(map, marker);
 
-      // Fetch place photo via Places API
+      // Fetch up to 10 photos from Places API
       service.getDetails(
-        { placeId: loc.placeId, fields: ["photos", "url"] },
+        { placeId: loc.placeId, fields: ["photos"] },
         (place, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK && place.photos && place.photos.length > 0) {
-            const photoUrl = place.photos[0].getUrl({ maxWidth: 560, maxHeight: 280 });
-            const withPhoto = `
+          const photos = (status === google.maps.places.PlacesServiceStatus.OK && place.photos)
+            ? place.photos.slice(0, 10)
+            : [];
+
+          if (photos.length === 0) {
+            infoWindow.setContent(`
               <div class="iw-wrap">
-                <img class="iw-img" src="${photoUrl}" alt="${loc.name}" />
+                <div class="iw-carousel-loading">No photos available</div>
                 <div class="iw-body">
                   <div class="iw-name">${loc.name}</div>
                   <div class="iw-badge" style="background:${color}">${CAT_LABELS[loc.cat]}</div>
@@ -189,9 +203,70 @@ function initMap() {
                     ${linkHtml}
                   </div>
                 </div>
-              </div>`;
-            infoWindow.setContent(withPhoto);
+              </div>`);
+            return;
           }
+
+          const photoUrls = photos.map(p => p.getUrl({ maxWidth: 560, maxHeight: 320 }));
+          const total = photoUrls.length;
+
+          const imgsHtml = photoUrls.map((url, i) =>
+            `<img src="${url}" class="${i === 0 ? 'active' : ''}" alt="${loc.name} photo ${i+1}" />`
+          ).join('');
+
+          const dotsHtml = total > 1
+            ? `<div class="iw-carousel-dots">${photoUrls.map((_, i) =>
+                `<button class="iw-dot ${i === 0 ? 'active' : ''}" data-i="${i}"></button>`
+              ).join('')}</div>`
+            : '';
+
+          const prevBtn = total > 1 ? `<button class="iw-carousel-btn iw-carousel-prev">&#8249;</button>` : '';
+          const nextBtn = total > 1 ? `<button class="iw-carousel-btn iw-carousel-next">&#8250;</button>` : '';
+
+          infoWindow.setContent(`
+            <div class="iw-wrap">
+              <div class="iw-carousel" id="carousel-${loc.placeId}">
+                ${imgsHtml}
+                ${prevBtn}
+                ${nextBtn}
+                ${dotsHtml}
+              </div>
+              <div class="iw-body">
+                <div class="iw-name">${loc.name}</div>
+                <div class="iw-badge" style="background:${color}">${CAT_LABELS[loc.cat]}</div>
+                <div class="iw-desc">${loc.desc}</div>
+                <div class="iw-footer">
+                  <div class="iw-count">In <strong>${loc.count}</strong> of 14 tours surveyed</div>
+                  ${linkHtml}
+                </div>
+              </div>
+            </div>`);
+
+          // Wire up carousel after content is set
+          google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
+            const carousel = document.getElementById(`carousel-${loc.placeId}`);
+            if (!carousel) return;
+
+            const imgs = carousel.querySelectorAll('img');
+            const dots = carousel.querySelectorAll('.iw-dot');
+            let current = 0;
+
+            function goTo(idx) {
+              imgs[current].classList.remove('active');
+              if (dots[current]) dots[current].classList.remove('active');
+              current = (idx + total) % total;
+              imgs[current].classList.add('active');
+              if (dots[current]) dots[current].classList.add('active');
+            }
+
+            const prevBtn = carousel.querySelector('.iw-carousel-prev');
+            const nextBtn = carousel.querySelector('.iw-carousel-next');
+            if (prevBtn) prevBtn.addEventListener('click', () => goTo(current - 1));
+            if (nextBtn) nextBtn.addEventListener('click', () => goTo(current + 1));
+            dots.forEach(dot => {
+              dot.addEventListener('click', () => goTo(parseInt(dot.dataset.i)));
+            });
+          });
         }
       );
     });
